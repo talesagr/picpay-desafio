@@ -13,6 +13,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -31,6 +33,7 @@ public class TransactionService {
         User sender = this.userService.findUserById(transaction.senderID());
         User receiver = this.userService.findUserById(transaction.receiverID());
 
+        //todo criar um objeto que seja true/false + mensagem
         userService.validateTransaction(sender,transaction.value());
 
         boolean isAuthorized = this.authorizeTransaction(sender,transaction.value());
@@ -57,12 +60,7 @@ public class TransactionService {
     }
 
     private Transaction setNewTransaction(BigDecimal value, User sender, User receiver) {
-        Transaction newTransaction = new Transaction();
-        newTransaction.setAmount(value);
-        newTransaction.setSender(sender);
-        newTransaction.setReceiver(receiver);
-        newTransaction.setTimestamp(LocalDateTime.now());
-        return newTransaction;
+        return new Transaction(value,sender,receiver,LocalDateTime.now());
     }
 
     public boolean authorizeTransaction(User sender, BigDecimal value){
@@ -72,4 +70,9 @@ public class TransactionService {
            return "Autorizado".equalsIgnoreCase(message);
        } else return false;
     }
+
+    public List<Transaction> getAllTransactions(){
+        return this.repository.findAll();
+    }
+
 }
