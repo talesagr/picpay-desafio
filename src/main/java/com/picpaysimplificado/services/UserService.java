@@ -28,6 +28,7 @@ public class UserService {
                                 new ValidadeTransactionAllGood()
                         )
                 );
+        validate.handler(dto);
     }
 
     public User findUserById(Long id) throws Exception{

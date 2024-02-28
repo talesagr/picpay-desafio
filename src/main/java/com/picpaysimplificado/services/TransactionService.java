@@ -4,17 +4,18 @@ import com.picpaysimplificado.DTO.TransactionDTO;
 import com.picpaysimplificado.domain.transaction.Transaction;
 import com.picpaysimplificado.domain.user.User;
 import com.picpaysimplificado.exceptions.transaction.NotAuthorizedTransactionException;
+import com.picpaysimplificado.exceptions.user.InsuficientBalanceException;
 import com.picpaysimplificado.repositories.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -29,29 +30,40 @@ public class TransactionService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Transactional(rollbackFor = Exception.class)
     public Transaction createTransaction(TransactionDTO transaction) throws Exception{
         User sender = this.userService.findUserById(transaction.senderID());
         User receiver = this.userService.findUserById(transaction.receiverID());
 
-        //todo criar um objeto que seja true/false + mensagem
-        userService.validateTransaction(sender,transaction.value());
+        validateAndAuthorizeTransaction(sender, transaction.value());
 
-        boolean isAuthorized = this.authorizeTransaction(sender,transaction.value());
-        if(!isAuthorized){
-            throw new NotAuthorizedTransactionException();
-        }
-        Transaction newTransaction = this.setNewTransaction(transaction.value(),sender,receiver);
+        Transaction newTransaction = this.setNewTransaction(transaction.value(), sender, receiver);
 
-        this.setBalanceOnTransaction(sender,receiver,transaction.value());
+        updateBalanceAndSave(sender,receiver,newTransaction);
 
-        this.repository.save(newTransaction);
-        this.userService.saveUser(sender);
-        this.userService.saveUser(receiver);
-
-        this.notificationService.sendNotification(sender, "Transacao realizada com sucesso!");
-        this.notificationService.sendNotification(receiver, "Transacao recebida com sucesso!");
+        notifyUsers(sender,receiver);
 
         return newTransaction;
+    }
+
+    private void notifyUsers(User sender, User receiver) throws Exception {
+        this.notificationService.sendNotification(sender, "Transacao realizada com sucesso!");
+        this.notificationService.sendNotification(receiver, "Transacao recebida com sucesso!");
+    }
+
+    private void updateBalanceAndSave(User sender, User receiver, Transaction transaction) {
+        setBalanceOnTransaction(sender,receiver,transaction.getAmount());
+        repository.save(transaction);
+        userService.saveUser(sender);
+        userService.saveUser(receiver);
+    }
+
+    private void validateAndAuthorizeTransaction(User sender, BigDecimal amount) throws Exception {
+        userService.validateTransaction(sender, amount);
+        if(!authorizeTransaction(sender,amount)) {
+            throw new NotAuthorizedTransactionException();
+        }
+
     }
 
     private void setBalanceOnTransaction(User sender, User receiver, BigDecimal value) {
