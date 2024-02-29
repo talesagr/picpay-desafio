@@ -3,8 +3,8 @@ package com.picpaysimplificado.middleware;
 import com.picpaysimplificado.DTO.ValidateTransactionDTO;
 import com.picpaysimplificado.exceptions.CustomException;
 
-public class ValidadeTransactionAllGood extends ValidateTransactionMiddleware {
-    public ValidadeTransactionAllGood() {
+public class ValidateTransactionAllGood extends ValidateTransactionMiddleware {
+    public ValidateTransactionAllGood() {
         super(null);
     }
 

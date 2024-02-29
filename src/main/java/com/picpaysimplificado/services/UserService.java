@@ -4,7 +4,7 @@ import com.picpaysimplificado.DTO.UserDTO;
 import com.picpaysimplificado.DTO.ValidateTransactionDTO;
 import com.picpaysimplificado.domain.user.User;
 import com.picpaysimplificado.exceptions.user.UserNotFoundException;
-import com.picpaysimplificado.middleware.ValidadeTransactionAllGood;
+import com.picpaysimplificado.middleware.ValidateTransactionAllGood;
 import com.picpaysimplificado.middleware.ValidateTransactionCheckBalanceAboveZero;
 import com.picpaysimplificado.middleware.ValidateTransactionCheckUserType;
 import com.picpaysimplificado.middleware.ValidateTransactionMiddleware;
@@ -25,7 +25,7 @@ public class UserService {
         ValidateTransactionMiddleware validate =
                 new ValidateTransactionCheckBalanceAboveZero(
                         new ValidateTransactionCheckUserType(
-                                new ValidadeTransactionAllGood()
+                                new ValidateTransactionAllGood()
                         )
                 );
         validate.handler(dto);
